@@ -150,11 +150,15 @@ def profile_origin(model, inputs, custom_ops=None, verbose=True):
     return total_ops, total_params
 
 
-def profile(model: nn.Module, inputs, custom_ops=None, verbose=True):
+def profile(model: nn.Module, inputs, custom_ops=None, verbose=True, input_kwargs=None):
     handler_collection = {}
     types_collection = set()
     if custom_ops is None:
         custom_ops = {}
+    if input_kwargs is None:
+        input_kwargs = {}
+    else:
+        assert isinstance(input_kwargs, dict)
 
     def add_hooks(m: nn.Module):
         m.register_buffer('total_ops', torch.zeros(1, dtype=torch.float64))
@@ -188,7 +192,7 @@ def profile(model: nn.Module, inputs, custom_ops=None, verbose=True):
     model.apply(add_hooks)
 
     with torch.no_grad():
-        model(*inputs)
+        model(*inputs, **input_kwargs)
 
     def dfs_count(module: nn.Module, prefix="\t") -> (int, int):
         total_ops, total_params = 0, 0
